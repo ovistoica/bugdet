@@ -80,7 +80,7 @@
 
 
 (defn new-transaction-form []
-  (let [initial-values {:amount 0 :recipient ""}
+  (let [initial-values {:amount nil :recipient ""}
         values (r/atom initial-values)
         save (fn [{:keys [amount recipient]}]
                (rf/dispatch [:transactions/add-transaction
@@ -96,11 +96,12 @@
                     :placeholder "Who will receive the money"
                     :type        "text"
                     :values      values}]
+       [:div
+        [form-group {:id          :amount
+                     :label       "Amount"
+                     :type        "number"
+                     :placeholder "Amount"
+                     :values      values}]]
        [:div.w-24
-        [form-group {:id     :amount
-                     :label  "Amount"
-                     :type   "number"
-                     :values values}]]
-       [:div.w-25
         [button {:on-click #(save @values)} "Send"]]])))
 

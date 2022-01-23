@@ -3,6 +3,7 @@
             [reagent.dom :as rdom]
             [budget.views :as v]
             [budget.gauge :refer [gauge-widget]]
+            [budget.chart :refer [example-chart]]
             [re-frame.core :as rf]
             [budget.db]))
 
@@ -10,13 +11,15 @@
   (gdom/getElement "app"))
 
 (defn budget-manager []
-  [:div.container.mx-auto
-   [:h1.text-xl.font-bold.py-4.text-gray-700
-    "Transaction manager"]
-   [v/new-transaction-form]
-   [v/transaction-table]
-   [:div {:class "w-60"}
-    [gauge-widget]]])
+  (let [x (rf/subscribe [:transactions/total-spending])]
+    [:div.container.mx-auto
+     [:div.w-72.h-72 [example-chart]]
+     [:h1.text-xl.font-bold.py-4.text-gray-700
+      "Transaction manager"]
+     [v/new-transaction-form]
+     [v/transaction-table]
+     [:div {:class "w-60"}
+      [gauge-widget]]]))
 
 (defn app
   []
