@@ -40,14 +40,12 @@
   [key]
   (.getItem js/localStorage key))
 
-;; Tailwind helpers
 (defn classes
   "Join multiple classes into a single string.
 
   Also filters falsy parameters"
   [& classes]
   (string/join " " (filter string? classes)))
-
 
 (defn unescape-html
   [entities]
@@ -60,7 +58,6 @@
   (->> (ulid)
        (str "tr-")
        (keyword)))
-
 
 
 (defn generate-transaction
@@ -80,3 +77,4 @@
 (defn timestamp->year [timestamp]
   (let [date (js/Date. timestamp)]
     (.getFullYear date)))
+

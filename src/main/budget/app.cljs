@@ -1,29 +1,48 @@
 (ns budget.app
   (:require [goog.dom :as gdom]
             [reagent.dom :as rdom]
-            [budget.views :as v]
-            [budget.gauge :refer [gauge-widget]]
-            [budget.chart :refer [example-chart]]
             [re-frame.core :as rf]
-            [budget.db]))
+            [budget.db]
+            [budget.nav :refer [start-router!]]
+            [budget.components :refer [price-input name-input button-primary application-shell
+                                       transactions-table example-chart]]))
 
-(defn get-app-element []
-  (gdom/getElement "app"))
+(defn transaction-form []
+  [:div.pb-6
+   [:h3.text-xl.font-medium.text-gray-700 "New transaction"]
+   [:div.grid.grid-cols-2.gap-2.mt-4.max-w-6xl
+    [name-input {:id "transaction" :label "To" :on-change #(prn %)}]
+    [price-input {:id "amount" :label "Amount" :on-change #(prn %)}]]
+   [:div.mt-6
+    [button-primary {:size :md
+                     :text "Create transaction"}]]])
 
-(defn budget-manager []
-  (let [x (rf/subscribe [:transactions/total-spending])]
-    [:div.container.mx-auto
-     [:div.w-72.h-72 [example-chart]]
-     [:h1.text-xl.font-bold.py-4.text-gray-700
-      "Transaction manager"]
-     [v/new-transaction-form]
-     [v/transaction-table]
-     [:div {:class "w-60"}
-      [gauge-widget]]]))
+
+(defn home-page []
+  [:<>
+   [transaction-form]
+   [transactions-table]])
+
+
+(defn graph-page []
+  [example-chart])
+
+(defn pages [page-name]
+  (case page-name
+    :home [home-page]
+    :graph [graph-page]
+    [home-page]))
+
 
 (defn app
   []
-  [budget-manager])
+  (let [active-page @(rf/subscribe [:nav/active-page])]
+    [application-shell
+     [pages active-page]]))
+
+
+(defn get-app-element []
+  (gdom/getElement "app"))
 
 (defn mount [el]
   (rdom/render [app] el))
@@ -45,6 +64,7 @@
 
 ;; start is called by init and after code reloading finishes
 (defn ^:dev/after-load start []
+  (start-router!)
   (rf/dispatch-sync [:app/initialize-db])
   (mount-app-element))
 

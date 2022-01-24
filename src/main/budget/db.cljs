@@ -4,7 +4,9 @@
 
 
 
-(def initial-db {:transactions {:tr-01FQGJA76T9ABK80DBGTQT9Q42
+(def initial-db {:app          {:show-sidebar? false}
+                 :nav          {:active-page :home}
+                 :transactions {:tr-01FQGJA76T9ABK80DBGTQT9Q42
                                 {:id        :tr-01FQGJA76T9ABK80DBGTQT9Q42,
                                  :recipient "John",
                                  :amount    2500,
@@ -46,6 +48,7 @@
                                  :amount    5500,
                                  :time      "2021-11-08T07:57:25.594-00:00"}}})
 
+
 (def months {"January"   1
              "February"  2
              "March"     3
@@ -65,6 +68,28 @@
   (fn [_ _]
     {:db initial-db}))
 
+(rf/reg-event-db
+  :app/show-mobile-sidebar
+  (fn [db [_ new-state]]
+    (assoc-in db [:app :show-sidebar?] new-state)))
+
+(rf/reg-event-db
+  :app/toggle-mobile-sidebar
+  (fn [db _]
+    (let [new-state (not (get-in db [:app :show-sidebar?]))]
+      (assoc-in db [:app :show-sidebar?] new-state))))
+
+(rf/reg-sub
+  :app/show-sidebar?
+  (fn [db _]
+    (get-in db [:app :show-sidebar?])))
+
+(comment
+  (rf/subscribe [:app/show-sidebar?])
+  (rf/dispatch [:app/toggle-mobile-sidebar])
+  (rf/dispatch [:app/show-mobile-sidebar true]))
+
+
 
 (rf/reg-event-db
   :transactions/add-transaction
@@ -76,9 +101,9 @@
 (rf/reg-sub
   :transactions/all
   (fn [db _]
-    (vals (:transactions db))))
-
-
+    ; return sorted by date entries
+    (sort #(compare (:id %2) (:id %1))
+          (vals (:transactions db)))))
 
 (rf/reg-sub
   :transactions/total-spending
@@ -98,7 +123,5 @@
 (comment
   (rf/clear-subscription-cache!)
   (rf/subscribe [:transactions/all])
-
-
   (rf/subscribe [:transactions/total-spending {:month 12 :year 2021}]))
 
