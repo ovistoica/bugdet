@@ -17,6 +17,17 @@
                                  :recipient "John",
                                  :amount    2500,
                                  :time      "2021-12-23T07:57:25.594-00:00"}
+                                :tr-01FQK4PY6T5GC2JAK66FGXWT5Y
+                                {:id        :tr-01FQK4PY6T5GC2JAK66FGXWT5X,
+                                 :recipient "John",
+                                 :amount    2500,
+                                 :time      "2021-12-23T07:57:25.594-00:00"}
+
+                                :tr-01FQK4PY6T5GC2JAK66FGXWT5Z
+                                {:id        :tr-01FQK4PY6T5GC2JAK66FGXWT5X,
+                                 :recipient "John",
+                                 :amount    2500,
+                                 :time      "2021-12-23T07:57:25.594-00:00"}
 
                                 :tr-01FT0C5JJTPG5XYQ9R3AKDJDAQ
                                 {:recipient "Groceries"
@@ -47,6 +58,7 @@
                                  :recipient "Doctor",
                                  :amount    5500,
                                  :time      "2021-11-08T07:57:25.594-00:00"}}})
+
 
 
 (def months {"January"   1
@@ -91,33 +103,19 @@
 
 
 
-(rf/reg-event-db
-  :transactions/add-transaction
-  (fn [db [_ {:keys [amount recipient time id]}]]
-    (assoc-in db [:transactions id] {:id        id
-                                     :recipient recipient
-                                     :amount    amount
-                                     :time      time})))
-(rf/reg-sub
-  :transactions/all
-  (fn [db _]
-    ; return sorted by date entries
-    (sort #(compare (:id %2) (:id %1))
-          (vals (:transactions db)))))
 
-(rf/reg-sub
-  :transactions/total-spending
-  :<- [:transactions/all]
-  (fn [transactions [_ {:keys [month year]}]]
-    (->> transactions
-         (filter (fn [transaction]
-                   (let [transaction-timestamp (:time transaction)
-                         t-month (h/timestamp->month transaction-timestamp)
-                         t-year (h/timestamp->year transaction-timestamp)]
-                     (and (= month t-month)
-                          (= year t-year)))))
-         (map :amount)
-         (reduce +))))
+(map #(select-keys % [:id :time ] ) (:transactions initial-db))
+
+; Generate ordered month array from a year ago
+;
+; Get everyone
+; get month
+;
+
+; If it is in the interval now, a year ago
+; Add it to the month
+
+
 
 
 (comment

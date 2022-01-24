@@ -10,3 +10,5 @@
 /.nrepl-port
 /.idea
 shadow-cljs-tailwind.iml
+
+/out

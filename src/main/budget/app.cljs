@@ -3,19 +3,11 @@
             [reagent.dom :as rdom]
             [re-frame.core :as rf]
             [budget.db]
+            [budget.transactions]
             [budget.nav :refer [start-router!]]
-            [budget.components :refer [price-input name-input button-primary application-shell
-                                       transactions-table example-chart]]))
+            [budget.components :refer [transaction-form application-shell
+                                       transactions-table spending-chart]]))
 
-(defn transaction-form []
-  [:div.pb-6
-   [:h3.text-xl.font-medium.text-gray-700 "New transaction"]
-   [:div.grid.grid-cols-2.gap-2.mt-4.max-w-6xl
-    [name-input {:id "transaction" :label "To" :on-change #(prn %)}]
-    [price-input {:id "amount" :label "Amount" :on-change #(prn %)}]]
-   [:div.mt-6
-    [button-primary {:size :md
-                     :text "Create transaction"}]]])
 
 
 (defn home-page []
@@ -24,13 +16,15 @@
    [transactions-table]])
 
 
-(defn graph-page []
-  [example-chart])
+(defn reports-page []
+  [:div {:class "w-full h-[38rem] mt-8 bg-white p-8 rounded"}
+   [spending-chart]])
+
 
 (defn pages [page-name]
   (case page-name
     :home [home-page]
-    :graph [graph-page]
+    :reports [reports-page]
     [home-page]))
 
 

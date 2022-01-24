@@ -1,19 +1,22 @@
 (ns budget.components
-  (:require [budget.helpers :refer [classes]]
+  (:require [budget.helpers :refer [classes transaction-id]]
+            [budget.nav :as nav]
             ["@headlessui/react" :refer [Transition Dialog]]
             ["@heroicons/react/outline" :refer [XIcon HomeIcon ChartBarIcon MenuAlt2Icon BellIcon]]
+            ["@heroicons/react/solid" :refer [ExclamationCircleIcon]]
             [reagent.core :as r]
             ["react" :refer [Fragment]]
             [re-frame.core :as rf]
             [cljs-time.format :as format :refer [formatter]]
             [cljs-time.coerce :as coerce]
-            ["recharts" :refer [LineChart Line XAxis YAxis Tooltip Legend ResponsiveContainer CartesianGrid]]
+            ["recharts" :refer [BarChart Bar Line XAxis YAxis Tooltip Legend ResponsiveContainer CartesianGrid]]
             ["react-gauge-chart" :default GaugeChart]
-            [budget.styles :refer [colors]]))
+            [budget.styles :refer [colors]]
+            [clojure.string :as string]))
 
 (def chart-responsive-container (r/adapt-react-class ResponsiveContainer))
-(def line-chart (r/adapt-react-class LineChart))
-(def line (r/adapt-react-class Line))
+(def bar-chart (r/adapt-react-class BarChart))
+(def bar (r/adapt-react-class Bar))
 (def x-axis (r/adapt-react-class XAxis))
 (def y-axis (r/adapt-react-class YAxis))
 (def tooltip (r/adapt-react-class Tooltip))
@@ -37,6 +40,7 @@
 (def chart-icon (r/adapt-react-class ChartBarIcon))
 (def menu-icon (r/adapt-react-class MenuAlt2Icon))
 (def bell-icon (r/adapt-react-class BellIcon))
+(def error-icon (r/adapt-react-class ExclamationCircleIcon))
 
 (defn payment-icon []
   [:svg.flex-shrink-0.h-5.w-5.text-gray-400.group-hover:text-gray-500
@@ -48,8 +52,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   Nav ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(def navigation-elements [{:name "Dashboard", :href "#", :icon home-icon, :current true}
-                          {:name "Reports", :href "#", :icon chart-icon, :current false}])
+(def navigation-elements [{:id       :home
+                           :name     "Home",
+                           :href     (nav/path-for :home)
+                           :icon     home-icon
+                           :dispatch #(rf/dispatch [:nav/set-active-page :home])}
+                          {:id       :reports
+                           :name     "Reports"
+                           :href     (nav/path-for :reports)
+                           :icon     chart-icon
+                           :dispatch #(rf/dispatch [:nav/set-active-page :reports])}])
 
 
 (defn mobile-sidebar []
@@ -57,84 +69,88 @@
         open? (if (boolean? rf-open?)
                 rf-open?
                 false)]
-    (fn []
-      [transition-root {:show open?
-                        :as   fragment}
-       [dialog {:as       "div" :class "fixed inset-0 flex z-40 md:hidden"
-                :on-close #(rf/dispatch [:app/show-mobile-sidebar false])}
-        [transition-child {:as        fragment
-                           :enter     "transition-opacity ease-linear duration-300"
-                           :enterFrom "opacity-0"
-                           :enterTo   "opacity-100"
-                           :leave     "transition-opacity ease-linear duration-300"
-                           :leaveFrom "opacity-100"
-                           :leaveTo   "opacity-0"}
-         [dialog-overlay {:class "fixed inset-0 bg-gray-600 bg-opacity-75"}]]
-        [transition-child {:as        fragment
-                           :enter     "transition ease-in-out duration-300 transform"
-                           :enterFrom "-translate-x-full"
-                           :enterTo   "translate-x-0"
-                           :leave     "transition ease-in-out duration-300 transform"
-                           :leaveFrom "translate-x-0"
-                           :leaveTo   "-translate-x-full"}
 
-         [:div {:class "relative flex-1 flex flex-col max-w-xs w-full pt-5 pb-4 bg-white"}
-          [transition-child
-           {:as        fragment
-            :enter     "ease-in-out duration-300"
-            :enterFrom "opacity-0"
-            :enterTo   "opacity-100"
-            :leave     "ease-in-out duration-300"
-            :leaveFrom "opacity-100"
-            :leaveTo   "opacity-0"}
+    [transition-root {:show open?
+                      :as   fragment}
+     [dialog {:as       "div" :class "fixed inset-0 flex z-40 md:hidden"
+              :on-close #(rf/dispatch [:app/show-mobile-sidebar false])}
+      [transition-child {:as        fragment
+                         :enter     "transition-opacity ease-linear duration-300"
+                         :enterFrom "opacity-0"
+                         :enterTo   "opacity-100"
+                         :leave     "transition-opacity ease-linear duration-300"
+                         :leaveFrom "opacity-100"
+                         :leaveTo   "opacity-0"}
+       [dialog-overlay {:class "fixed inset-0 bg-gray-600 bg-opacity-75"}]]
+      [transition-child {:as        fragment
+                         :enter     "transition ease-in-out duration-300 transform"
+                         :enterFrom "-translate-x-full"
+                         :enterTo   "translate-x-0"
+                         :leave     "transition ease-in-out duration-300 transform"
+                         :leaveFrom "translate-x-0"
+                         :leaveTo   "-translate-x-full"}
+
+       [:div {:class "relative flex-1 flex flex-col max-w-xs w-full pt-5 pb-4 bg-white"}
+        [transition-child
+         {:as        fragment
+          :enter     "ease-in-out duration-300"
+          :enterFrom "opacity-0"
+          :enterTo   "opacity-100"
+          :leave     "ease-in-out duration-300"
+          :leaveFrom "opacity-100"
+          :leaveTo   "opacity-0"}
 
 
-           [:div.absolute.top-0.right-0.-mr-12.pt-2
-            [:button {:type     :button
-                      :class
-                      (classes "ml-1 flex items-center justify-center h-10 w-10 rounded-full"
-                               "focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white")
-                      :on-click #(rf/dispatch [:app/show-mobile-sidebar false])}
-             [:span.sr-only "Close sidebar"]
-             [x-icon {:class "h-6 w-6 text-white" :aria-hidden true}]]]]
-          [:div.flex-shrink-0.flex.items-center.px-4
-           [:img.h-8.w-auto
-            {:src "https://tailwindui.com/img/logos/workflow-logo-indigo-600-mark-gray-800-text.svg"
-             :alt "Workflow"}]]
-          [:div.mt-5.flex-1.h-0.overflow-y-auto
-           [:nav.px-2.space-y-1
-            (for [{:keys [icon current href name]} navigation-elements]
-              ^{:key (str "mobile-nav " name)}
-              [:a {:href  href
-                   :class (classes "group flex items-center px-2 py-2 text-base font-medium rounded-md"
-                                   (if current
-                                     "bg-gray-100 text-gray-900"
-                                     "text-gray-600 hover:bg-gray-50 hover:text-gray-900"))}
-               [icon {:class (classes "mr-4 flex-shrink-0 h-6 w-6"
-                                      (if current "text-gray-500"
-                                                  "text-gray-400 group-hover:text-gray-500"))}] name])]]]]
-        ; dummy element to force sidebar to shrink to fit close icon
-        [:div.flex-shrink-0.w-14 {:aria-hidden true}]]])))
+         [:div.absolute.top-0.right-0.-mr-12.pt-2
+          [:button {:type     :button
+                    :class
+                    (classes "ml-1 flex items-center justify-center h-10 w-10 rounded-full"
+                             "focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white")
+                    :on-click #(rf/dispatch [:app/show-mobile-sidebar false])}
+           [:span.sr-only "Close sidebar"]
+           [x-icon {:class "h-6 w-6 text-white" :aria-hidden true}]]]]
+        [:div.flex-shrink-0.flex.items-center.px-4
+         [:img.h-8.w-auto
+          {:src "https://designvote-storage.fra1.cdn.digitaloceanspaces.com/logo-transaction.png"
+           :alt "Transaction Manager"}]]
+        [:div.mt-5.flex-1.h-0.overflow-y-auto
+         [:nav.px-2.space-y-1
+          (for [{:keys [icon current href name]} navigation-elements]
+            ^{:key (str "mobile-nav " name)}
+            [:a {:href  href
+                 :class (classes "group flex items-center px-2 py-2 text-base font-medium rounded-md"
+                                 (if current
+                                   "bg-gray-100 text-gray-900"
+                                   "text-gray-600 hover:bg-gray-50 hover:text-gray-900"))}
+             [icon {:class (classes "mr-4 flex-shrink-0 h-6 w-6"
+                                    (if current "text-gray-500"
+                                                "text-gray-400 group-hover:text-gray-500"))}] name])]]]]
+      ; dummy element to force sidebar to shrink to fit close icon
+      [:div.flex-shrink-0.w-14 {:aria-hidden true}]]]))
 
 
 
 (defn desktop-sidebar []
-  [:div {:class "hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0"}
-   [:div {:class (classes "flex flex-col flex-grow border-r border-gray-200"
-                          "pt-5 bg-white overflow-y-auto")}
-    [:div {:class "flex items-center flex-shrink-0 px-4"}
-     [:img {:class "h-8 w-auto"
-            :src   "https://tailwindui.com/img/logos/workflow-logo-indigo-600-mark-gray-800-text.svg" :alt "Workflow"}]]
-    [:div {:class "mt-5 flex-grow flex flex-col"}
-     [:nav {:class "flex-1 px-2 pb-4 space-y-1"}
-      (for [{:keys [icon current href name]} navigation-elements]
-        ^{:key (str "mobile-nav " name)}
-        [:a {:href  href
-             :class (classes "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                             (if current "bg-gray-100 text-gray-900" "text-gray-600 hover:bg-gray-50 hover:text-gray-900"))}
-         [icon {:class       (classes "mr-3 flex-shrink-0 h-6 w-6"
-                                      (if current "text-gray-500" "text-gray-400 group-hover:text-gray-500"))
-                :aria-hidden true}] name])]]]])
+  (let [active-page @(rf/subscribe [:nav/active-page])]
+    [:div {:class "hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0"}
+     [:div {:class (classes "flex flex-col flex-grow border-r border-gray-200"
+                            "pt-5 bg-white overflow-y-auto")}
+      [:div {:class "flex items-center flex-shrink-0 px-4"}
+       [:img {:class "h-8 w-auto"
+              :src   "https://designvote-storage.fra1.cdn.digitaloceanspaces.com/logo-transaction.png"
+              :alt   "Transaction Manager"}]]
+      [:div {:class "mt-5 flex-grow flex flex-col"}
+       [:nav {:class "flex-1 px-2 pb-4 space-y-1"}
+        (for [{:keys [icon href name id dispatch]} navigation-elements
+              :let [active? (= active-page id)]]
+          ^{:key (str "mobile-nav " name)}
+          [:a {:href     href
+               :on-click #(dispatch)
+               :class    (classes "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                                  (if active? "bg-gray-100 text-gray-900" "text-gray-600 hover:bg-gray-50 hover:text-gray-900"))}
+           [icon {:class       (classes "mr-3 flex-shrink-0 h-6 w-6"
+                                        (if active? "text-gray-500" "text-gray-400 group-hover:text-gray-500"))
+                  :aria-hidden true}] name])]]]]))
 
 
 (defn application-top-bar []
@@ -157,18 +173,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    Layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn application-shell [title & children]
-  [:div
-   [mobile-sidebar]
-   [desktop-sidebar]
-   [:div {:className "md:pl-64 flex flex-col flex-1"}
-    [application-top-bar]
-    [:main.flex-1
-     [:div.py-6
-      [:div.max-w-7xl.mx-auto.px-4.sm:px-6.md:px-8
-       [:h1.text-2xl.font-semibold.text-gray-900 title]]
-      [:div.max-w-7xl.mx-auto.px-4.sm:px-6.md:px-8
-       children]]]]])
+(defn application-shell [& children]
+  (let [title @(rf/subscribe [:nav/page-title])]
+    [:div
+     [mobile-sidebar]
+     [desktop-sidebar]
+     [:div {:className "md:pl-64 flex flex-col flex-1"}
+      [application-top-bar]
+      [:main.flex-1
+       [:div.py-6
+        [:div.max-w-7xl.mx-auto.px-4.sm:px-6.md:px-8
+         [:h1.text-2xl.font-semibold.text-gray-900 title]]
+        [:div.max-w-7xl.mx-auto.px-4.sm:px-6.md:px-8
+         children]]]]]))
 
 
 (defn container [& children]
@@ -179,7 +196,9 @@
 
 (defn event-value [^js/Event e] (-> e .-target .-value))
 
-(defn price-input [{:keys [id label name on-change value class]}]
+(def error-input-style "border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500")
+
+(defn price-input [{:keys [id label name on-change value class error]}]
   [:div
    [:label.block.text-sm.font-medium.text-gray-700 {:for id} label]
    [:div.mt-1.relative.rounded-md.shadow-sm
@@ -189,14 +208,19 @@
              :type             "text"
              :name             name
              :placeholder      "0.00"
-             :aria-describedby "price-currency"
+             :aria-describedby (if error "amount-error" "price-currency")
              :on-change        on-change
              :value            value
-             :class            (classes "focus:ring-indigo-500 focus:border-indigo-500 block w-full"
-                                        "border-gray-300 rounded-md pl-7 pr-12 sm:text-sm"
+             :class            (classes (if error
+                                          error-input-style
+                                          "focus:ring-indigo-500 focus:border-indigo-500 border-gray-300")
+                                        "block w-full  rounded-md pl-7 pr-12 sm:text-sm"
                                         (when class class))}]
     [:div.absolute.inset-y-0.right-0.pr-3.flex.items-center.pointer-events-none
-     [:span#price-currency.text-gray-500.sm:text-sm "UAH"]]]])
+     (if error
+       [error-icon {:class "h-5 w-5 text-red-500" :aria-hidden true}]
+       [:span#price-currency.text-gray-500.sm:text-sm "UAH"])]
+    (when error [:p#amount-error {:className "absolute -bottom-8 text-sm text-red-600"} error])]])
 
 (defn name-input [{:keys [id label name placeholder on-change value class]}]
   [:div
@@ -210,11 +234,11 @@
              :value       value
              :class       (classes "focus:ring-indigo-500 focus:border-indigo-500 block w-full"
                                    "border-gray-300 rounded-md pl-7 pr-12 sm:text-sm"
-                                   (when class class))}]]])
+                                   (when class class))}]
+    [:div {:className "absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"}
+     [:ExclamationCircleIcon {:className "h-5 w-5 text-red-500" :aria-hidden "true"}]]]])
 
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Buttons ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn button-size-classes [size]
   (case size
@@ -224,17 +248,63 @@
     :lg "px-4 py-2 text-base rounded-md"
     :xl "px-6 py-3 text-base rounded-md"))
 
-(defn button-primary [{:keys [size text on-click class]}]
+(def disabled-style "cursor-not-allowed opacity-50")
+
+(defn button-primary [{:keys [size text on-click class disabled?]}]
   (let [size-classes (button-size-classes size)]
     [:button {:class    (classes "inline-flex items-center border border-transparent font-medium "
                                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                  "bg-indigo-600 hover:bg-indigo-700 shadow-sm text-white"
                                  size-classes
+                                 (when disabled? disabled-style)
                                  (when class class))
               :type     :button
-              :on-click on-click} text]))
+              :on-click (when-not disabled?
+                          (on-click))} text]))
 
 
+(defn transaction-form []
+  (let [initial-values {:amount nil :recipient ""}
+        values (r/atom initial-values)
+        save (fn [{:keys [amount recipient]}]
+               (rf/dispatch [:transactions/add-transaction
+                             {:recipient (string/trim recipient)
+                              :amount    (js/parseInt amount 10)
+                              :id        (transaction-id)
+                              :time      (js/Date.)}])
+               (reset! values initial-values))]
+    (fn []
+      (let [input-error? (and (not (nil? (:amount @values)))
+                              (js/isNaN (js/parseInt (:amount @values))))
+            button-disabled? (or (not (pos-int? (:amount @values)))
+                                 (zero? (count (:recipient @values))))]
+        [:div.pb-6
+         [:div.grid.grid-cols-2.gap-2.mt-4.max-w-6xl
+          [name-input {:id        :recipient
+                       :label     "To"
+                       :value     (:recipient @values)
+                       :on-change #(swap! values assoc
+                                          :recipient (event-value %))}]
+          [price-input {:id        "amount"
+                        :label     "Amount"
+                        :value     (:amount @values)
+                        :error     (when input-error? "Please enter a valid amount")
+                        :on-change #(swap! values assoc
+                                           :amount (event-value %))}]]
+         [:div.mt-6
+          [button-primary {:size      :md
+                           :text      "Create transaction"
+                           :on-click  #(save values)
+                           :disabled? button-disabled?}]]]))))
+
+
+
+(def values (r/atom {:amount "awdawd" :recipient ""}))
+(defn dis [values]
+  (or (not (pos-int? (:amount @values)))
+      (zero? (count (:recipient @values)))))
+
+(dis values)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Table ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -311,49 +381,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Charts ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def data [{:name "Page A"
-            :uv   4000
-            :pv   2400
-            :amt  2400,}
-           {:name "Page B"
-            :uv   3000
-            :pv   1398
-            :amt  2210,}
-           {:name "Page C"
-            :uv   2000
-            :pv   9800
-            :amt  2290,}
-           {:name "Page D"
-            :uv   2780
-            :pv   3908
-            :amt  2000}
-           {:name "Page E"
-            :uv   1890
-            :pv   4800
-            :amt  2181}
-           {:name "Page F"
-            :uv   2390
-            :pv   3800
-            :amt  2500}
-           {:name "Page G"
-            :uv   3490
-            :pv   4300
-            :amt  2100}])
-;
 
-
-(defn example-chart []
-  [chart-responsive-container {:width "100%" :height "100%"}
-   [line-chart {:width  500 :height 300
-                :data   data
-                :margin {:top 5 :right 30 :left 20 :bottom 5}}
-    [cartesian-grid {:strokeDasharray "3 3"}]
-    [x-axis {:data-key "name"}]
-    [y-axis]
-    [tooltip]
-    [legend]
-    [line {:type "monotone" :dataKey "pv" :stroke "#8884d8" :activeDot {:r 8}}]
-    [line {:type "monotone" :dataKey "uv" :stroke "#82ca9d"}]]])
+(defn spending-chart []
+  (let [spending-by-month @(rf/subscribe [:transactions/spending-by-month])]
+    [chart-responsive-container {:width "100%" :height "100%"}
+     [bar-chart {:width  500 :height 300
+                 :data   spending-by-month
+                 :margin {:top 5 :right 30 :left 20 :bottom 5}}
+      ;[cartesian-grid {:strokeDasharray "3 3"}]
+      [x-axis {:dataKey "name"}]
+      [y-axis {:unit "₴"}]
+      [tooltip {:name "total spending" :unit "₴"}]
+      [legend]
+      [bar {:dataKey "total" :fill "#8884d8"}]]]))
 
 
 
