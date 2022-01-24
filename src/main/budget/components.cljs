@@ -173,7 +173,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    Layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn application-shell [& children]
+(defn application-shell
+  "Shell containing side bar used on all application pages"
+  [& children]
   (let [title @(rf/subscribe [:nav/page-title])]
     [:div
      [mobile-sidebar]
@@ -263,7 +265,9 @@
                           (on-click))} text]))
 
 
-(defn transaction-form []
+(defn transaction-form
+  "Form used to add a new transaction"
+  []
   (let [initial-values {:amount nil :recipient ""}
         values (r/atom initial-values)
         save (fn [{:keys [amount recipient]}]
@@ -297,16 +301,6 @@
                            :on-click  #(save values)
                            :disabled? button-disabled?}]]]))))
 
-
-
-(def values (r/atom {:amount "awdawd" :recipient ""}))
-(defn dis [values]
-  (or (not (pos-int? (:amount @values)))
-      (zero? (count (:recipient @values)))))
-
-(dis values)
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Table ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn table-container [& children]
@@ -315,7 +309,9 @@
     [:div.align-middle.min-w-full.overflow-x-auto.shadow.overflow-hidden.sm:rounded-lg
      children]]])
 
-(defn table [{:keys [head rows]}]
+(defn table
+  "General styled table"
+  [{:keys [head rows]}]
   [table-container
    [:table.min-w-full.divide-y.divide-gray-200
     head
@@ -371,7 +367,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Charts ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn spending-chart []
+(defn spending-chart
+  "A chart that shows total spending by month."
+  []
   (let [spending-by-month @(rf/subscribe [:transactions/spending-by-month])]
     [chart-responsive-container {:width "100%" :height "100%"}
      [bar-chart {:width  500 :height 300

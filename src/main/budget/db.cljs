@@ -1,6 +1,5 @@
 (ns budget.db
-  (:require [re-frame.core :as rf]
-            [budget.helpers :as h]))
+  (:require [re-frame.core :as rf]))
 
 
 
@@ -59,22 +58,6 @@
                                  :amount    5500,
                                  :time      "2021-11-08T07:57:25.594-00:00"}}})
 
-
-
-(def months {"January"   1
-             "February"  2
-             "March"     3
-             "April"     4
-             "May"       5
-             "June"      6
-             "July"      7
-             "August"    8
-             "September" 9
-             "October"   10
-             "November"  11
-             "December"  12})
-
-
 (rf/reg-event-fx
   :app/initialize-db
   (fn [_ _]
@@ -100,22 +83,6 @@
   (rf/subscribe [:app/show-sidebar?])
   (rf/dispatch [:app/toggle-mobile-sidebar])
   (rf/dispatch [:app/show-mobile-sidebar true]))
-
-
-
-
-(map #(select-keys % [:id :time ] ) (:transactions initial-db))
-
-; Generate ordered month array from a year ago
-;
-; Get everyone
-; get month
-;
-
-; If it is in the interval now, a year ago
-; Add it to the month
-
-
 
 
 (comment
