@@ -57,36 +57,6 @@
       "Transactions")))
 
 
-
-(defn nav-link
-  [{:keys [id href name dispatch active-page]}]
-  (let [active? (= active-page id)]
-    [:a {:key      id
-         :href     href
-         :class    (str "pb-2 mx-3 " (when active? "text-blue-500 border-blue-500 border-b-2"))
-         :pb       10
-         :on-click dispatch} name]))
-
-
-(def nav-items [{:id       :home
-                 :name     "Home"
-                 :href     (path-for :home)
-                 :dispatch #(rf/dispatch [:nav/set-active-page :home])}
-                {:id       :graph
-                 :name     "Spending Graph"
-                 :href     (path-for :graph)
-                 :dispatch #(rf/dispatch [:nav/set-active-page :graph])}])
-
-(defn nav-bar
-  []
-  (let [active-page @(rf/subscribe [:nav/active-page])]
-    [:div {:class "flex justify-start py-1"}
-     (for [item nav-items]
-       ^{:key (:id item)}
-       [nav-link (assoc item :active-page active-page)])]))
-
-
-
 (comment
   (rf/dispatch [:nav/set-active-page :graph])
   (rf/subscribe [:nav/active-page]))
