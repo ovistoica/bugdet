@@ -1,4 +1,4 @@
-(ns budget.app
+(ns budget.core
   (:require [goog.dom :as gdom]
             [reagent.dom :as rdom]
             [re-frame.core :as rf]
@@ -6,7 +6,7 @@
             [budget.transactions]
             [budget.nav :refer [start-router!]]
             [budget.components :refer [transaction-form application-shell
-                                       transactions-table spending-chart]]))
+                                       transactions-table spending-chart gauge-widget]]))
 
 
 
@@ -17,8 +17,15 @@
 
 
 (defn reports-page []
-  [:div {:class "w-full h-[38rem] mt-8 bg-white p-8 rounded"}
-   [spending-chart]])
+  (let [spending-limit @(rf/subscribe [:reports/spending-limit])]
+    [:div.bg-white.p-8.m-2.w-full
+     [:div.flex.flex-col.w-full.mt-2.items-center.justify-center
+      [:h3 {:class "text-xl leading-6 font-medium text-gray-900"} "Spending in the current month"]
+      [:p {:class "mt-1 max-w-2xl text-sm text-gray-500"} (str "Spending limit is set at: ₴" spending-limit " UAH")]
+      [gauge-widget]]
+     [:div {:class "w-full h-[38rem] mt-8 bg-white p-8 rounded"}
+      [:h2.text-xl.font-semibold.text-gray-800.mb-4.text-center "Spending by month"]
+      [spending-chart]]]))
 
 
 (defn pages [page-name]

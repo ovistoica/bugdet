@@ -1,8 +1,9 @@
 (ns budget.transactions
-  (:require [cljs-time.coerce :refer [to-date-time]]
-            [cljs-time.core :refer [month year]]
+  (:require [cljs-time.coerce :refer [to-date-time from-date]]
+            [cljs-time.core :refer [month year now]]
             [cljs-time.format :as format :refer [formatter]]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [goog.string :as gstring]))
 
 
 (defn year-month-format
@@ -32,19 +33,40 @@
     (sort #(compare (:id %2) (:id %1))
           (vals (:transactions db)))))
 
+; Total spending in month
 (rf/reg-sub
-  :transactions/total-spending
+  :transactions/current-month-spending
   :<- [:transactions/all]
-  (fn [transactions [_ args]]
+  (fn [transactions _]
     (->> transactions
          (filter (fn [transaction]
-                   (let [dt-obj (to-date-time (:time transaction))
+                   (let [[curr-month curr-year] (-> (now) ((juxt month year)))
+                         dt-obj (from-date (js/Date. (:time transaction)))
                          t-month (month dt-obj)
                          t-year (year dt-obj)]
-                     (and (= (:month args) t-month)
-                          (= (:year args) t-year)))))
+                     (and (= curr-month t-month)
+                          (= curr-year t-year)))))
          (map :amount)
          (reduce +))))
+
+(rf/reg-sub
+  :reports/spending-limit
+  (fn [db _]
+    (-> db :reports :spending-limit)))
+
+
+(rf/reg-sub
+  :reports/spending-percent
+  :<- [:transactions/current-month-spending]
+  :<- [:reports/spending-limit]
+  (fn [[current-month-spending spending-limit] _]
+    (gstring/format "%.2f" (/ current-month-spending spending-limit))))
+
+(comment
+  (rf/subscribe [:reports/spending-percent])
+  (rf/subscribe [:transactions/current-month-spending])
+  (rf/clear-subscription-cache!)
+  (rf/subscribe [:reports/spending-percent]))
 
 (rf/reg-sub
   :transactions/spending-by-month
@@ -55,7 +77,7 @@
          ; which will keep the total transaction amount for that month
          (reduce (fn
                    [month-map {:keys [time amount]}]
-                   (let [dtobj (to-date-time time)
+                   (let [dtobj (from-date (js/Date. time))
                          map-key (year-month-format dtobj)
                          month-map-val (or (get month-map map-key)
                                            {:name (str (month-name dtobj) "-" (year dtobj))})]

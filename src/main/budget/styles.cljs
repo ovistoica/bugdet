@@ -7,11 +7,19 @@
    :white           "#ffffff",
    :red             "#f44336",
 
+   :red-300         "#fca5a5"
+
+   :yellow-300      "#fcd34d"
+
+   :green-300       "#86efac"
+
 
 
    :grey-700        "#616161"
    :grey-800        "#424242"
    :grey-900        "#212121"
+
+   :indigo-400      "#818cf8"
 
 
 

@@ -1,18 +1,18 @@
 (ns budget.components
   (:require [budget.helpers :refer [classes transaction-id]]
             [budget.nav :as nav]
+            [reagent.core :as r]
+            [re-frame.core :as rf]
+            [cljs-time.format :as format :refer [formatter]]
+            [cljs-time.coerce :refer [from-date]]
+            [budget.styles :refer [colors]]
+            [clojure.string :as string]
             ["@headlessui/react" :refer [Transition Dialog]]
             ["@heroicons/react/outline" :refer [XIcon HomeIcon ChartBarIcon MenuAlt2Icon BellIcon]]
             ["@heroicons/react/solid" :refer [ExclamationCircleIcon]]
-            [reagent.core :as r]
             ["react" :refer [Fragment]]
-            [re-frame.core :as rf]
-            [cljs-time.format :as format :refer [formatter]]
-            [cljs-time.coerce :as coerce]
-            ["recharts" :refer [BarChart Bar Line XAxis YAxis Tooltip Legend ResponsiveContainer CartesianGrid]]
-            ["react-gauge-chart" :default GaugeChart]
-            [budget.styles :refer [colors]]
-            [clojure.string :as string]))
+            ["recharts" :refer [BarChart Bar XAxis YAxis Tooltip Legend ResponsiveContainer]]
+            ["react-gauge-chart" :default GaugeChart]))
 
 (def chart-responsive-container (r/adapt-react-class ResponsiveContainer))
 (def bar-chart (r/adapt-react-class BarChart))
@@ -21,7 +21,6 @@
 (def y-axis (r/adapt-react-class YAxis))
 (def tooltip (r/adapt-react-class Tooltip))
 (def legend (r/adapt-react-class Legend))
-(def cartesian-grid (r/adapt-react-class CartesianGrid))
 
 (def dialog (r/adapt-react-class Dialog))
 (def transition-child
@@ -65,7 +64,7 @@
 
 
 (defn mobile-sidebar []
-  (let [rf-open? @(rf/subscribe [:app/show-sidebar?])
+  (let [rf-open? @(rf/subscribe [:app/show-mobile-sidebar?])
         open? (if (boolean? rf-open?)
                 rf-open?
                 false)]
@@ -236,9 +235,7 @@
              :value       value
              :class       (classes "focus:ring-indigo-500 focus:border-indigo-500 block w-full"
                                    "border-gray-300 rounded-md pl-7 pr-12 sm:text-sm"
-                                   (when class class))}]
-    [:div {:className "absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"}
-     [:ExclamationCircleIcon {:className "h-5 w-5 text-red-500" :aria-hidden "true"}]]]])
+                                   (when class class))}]]])
 
 
 
@@ -253,6 +250,7 @@
 (def disabled-style "cursor-not-allowed opacity-50")
 
 (defn button-primary [{:keys [size text on-click class disabled?]}]
+  (prn disabled?)
   (let [size-classes (button-size-classes size)]
     [:button {:class    (classes "inline-flex items-center border border-transparent font-medium "
                                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -261,8 +259,8 @@
                                  (when disabled? disabled-style)
                                  (when class class))
               :type     :button
-              :on-click (when-not disabled?
-                          (on-click))} text]))
+              :on-click #(when-not disabled?
+                           (on-click))} text]))
 
 
 (defn transaction-form
@@ -275,12 +273,14 @@
                              {:recipient (string/trim recipient)
                               :amount    (js/parseInt amount 10)
                               :id        (transaction-id)
-                              :time      (js/Date.)}])
+                              :time      (str (js/Date.))}])
                (reset! values initial-values))]
     (fn []
-      (let [input-error? (and (not (nil? (:amount @values)))
-                              (js/isNaN (js/parseInt (:amount @values))))
-            button-disabled? (or (not (pos-int? (:amount @values)))
+      (let [price-value (js/parseInt (:amount @values))
+            input-error? (and (not (nil? (:amount @values)))
+                              (js/isNaN price-value))
+            button-disabled? (or input-error?
+                                 (not (pos-int? price-value))
                                  (zero? (count (:recipient @values))))]
         [:div.pb-6
          [:div.grid.grid-cols-2.gap-2.mt-4.max-w-6xl
@@ -298,7 +298,7 @@
          [:div.mt-6
           [button-primary {:size      :md
                            :text      "Create transaction"
-                           :on-click  #(save values)
+                           :on-click  #(save @values)
                            :disabled? button-disabled?}]]]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Table ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -343,7 +343,7 @@
    [:span.inline-flex.items-center.px-2.5.py-0.5.rounded-full.text-xs.font-medium.bg-green-100.text-green-800.capitalize "success"]])
 
 (defn date-col [timestamp]
-  (let [dt (coerce/from-string timestamp)
+  (let [dt (from-date (js/Date. timestamp))
         pretty-format (format/unparse (formatter "MMMM dd, yyyy") dt)
         datetime (format/unparse (formatter "yyyy-MM-dd") dt)]
     [:td.px-6.py-4.text-right.whitespace-nowrap.text-sm.text-gray-500
@@ -381,13 +381,7 @@
       [legend]
       [bar {:dataKey "total" :fill "#8884d8"}]]]))
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Gauge ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def green-spending-limit 18000)
-(def yellow-spending-limit 35000)
 
 (def gauge
   "Gauge Widget:
@@ -410,9 +404,11 @@
 
 (def gauge-id "budget-manager-gauge-id")
 
-
 (defn gauge-widget []
-  [gauge {:id           gauge-id
-          :text-color   (:grey-800 colors)
-          :needle-color (:blue-700 colors)}])
-
+  (let [percent @(rf/subscribe [:reports/spending-percent])]
+    [gauge {:id           gauge-id
+            :style        {:height 100 :width 300 :margin-bottom 8}
+            :percent      percent
+            :text-color   (:grey-800 colors)
+            :needle-color (:indigo-400 colors)
+            :colors       ((juxt :green-300 :yellow-300 :red-300) colors)}]))
