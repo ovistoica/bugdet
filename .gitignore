@@ -1,7 +1,8 @@
 /.clj-kondo
 /.lsp
 /.cpcache
-/public/js
+/public/js/cljs-runtime
+/public/js/manifest.edn
 /public/css
 /node_modules
 /target
