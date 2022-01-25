@@ -3,7 +3,7 @@
 /.cpcache
 /public/js/cljs-runtime
 /public/js/manifest.edn
-/public/css
+#/public/css
 /node_modules
 /target
 /.shadow-cljs
