@@ -22,10 +22,9 @@
 (rf/reg-event-db
   :transactions/add-transaction
   (fn [db [_ {:keys [amount recipient time id]}]]
-    (assoc-in db [:transactions id] {:id        id
-                                     :recipient recipient
-                                     :amount    amount
-                                     :time      time})))
+    (assoc-in db
+      [:transactions id]
+      {:id id :recipient recipient :amount amount :time time})))
 (rf/reg-sub
   :transactions/all
   (fn [db _]
@@ -36,11 +35,13 @@
 ; Total spending in month
 (rf/reg-sub
   :transactions/current-month-spending
-  :<- [:transactions/all]
+  :<-
+  [:transactions/all]
   (fn [transactions _]
     (->> transactions
          (filter (fn [transaction]
-                   (let [[curr-month curr-year] (-> (now) ((juxt month year)))
+                   (let [[curr-month curr-year] (-> (now)
+                                                    ((juxt month year)))
                          dt-obj (from-date (js/Date. (:time transaction)))
                          t-month (month dt-obj)
                          t-year (year dt-obj)]
@@ -52,13 +53,17 @@
 (rf/reg-sub
   :reports/spending-limit
   (fn [db _]
-    (-> db :reports :spending-limit)))
+    (-> db
+        :reports
+        :spending-limit)))
 
 
 (rf/reg-sub
   :reports/spending-percent
-  :<- [:transactions/current-month-spending]
-  :<- [:reports/spending-limit]
+  :<-
+  [:transactions/current-month-spending]
+  :<-
+  [:reports/spending-limit]
   (fn [[current-month-spending spending-limit] _]
     (gstring/format "%.2f" (/ current-month-spending spending-limit))))
 
@@ -70,7 +75,8 @@
 
 (rf/reg-sub
   :transactions/spending-by-month
-  :<- [:transactions/all]
+  :<-
+  [:transactions/all]
   (fn [transactions _]
     (->> transactions
          ; Create a map with "yyyyMM" (year month) as key
@@ -80,9 +86,15 @@
                    (let [dtobj (from-date (js/Date. time))
                          map-key (year-month-format dtobj)
                          month-map-val (or (get month-map map-key)
-                                           {:name (str (month-name dtobj) "-" (year dtobj))})]
-                     (assoc month-map map-key (update month-map-val
-                                                      :total + amount)))) {})
+                                           {:name (str (month-name dtobj)
+                                                       "-"
+                                                       (year dtobj))})]
+                     (assoc month-map
+                       map-key (update month-map-val
+                                       :total
+                                       +
+                                       amount))))
+           {})
          ; Sort based on the yyyyMM key
          (seq)
          (sort #(compare (first %1) (first %2)))

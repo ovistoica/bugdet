@@ -1,0 +1,4 @@
+{:map {:comma? false
+       ;:force-nl? true
+       :sort? true}
+ :list {:respect-nl? true}}

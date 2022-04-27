@@ -64,17 +64,19 @@
   "Used to generate random data"
   [recipient amount timestamp]
   (let [time (js/Date. timestamp)]
-    {:id        (keyword (str "tr-" (ulid (.getTime time))))
+    {:id (keyword (str "tr-" (ulid (.getTime time))))
      :recipient recipient
-     :amount    amount
-     :time      time}))
+     :amount amount
+     :time time}))
 
 
-(defn timestamp->month [timestamp]
+(defn timestamp->month
+  [timestamp]
   (let [date (js/Date. timestamp)]
     (inc (.getMonth date))))
 
-(defn timestamp->year [timestamp]
+(defn timestamp->year
+  [timestamp]
   (let [date (js/Date. timestamp)]
     (.getFullYear date)))
 

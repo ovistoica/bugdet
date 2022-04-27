@@ -3,8 +3,7 @@
             [pushy.core :as pushy]
             [re-frame.core :as rf]))
 
-(def routes ["/" {""        :home
-                  "reports" :reports}])
+(def routes ["/" {"" :home "reports" :reports}])
 
 (def history
   (let [dispatch #(rf/dispatch [:nav/route-changed %])
@@ -49,7 +48,8 @@
 
 (rf/reg-sub
   :nav/page-title
-  :<- [:nav/active-page]
+  :<-
+  [:nav/active-page]
   (fn [active-page _]
     (case active-page
       :home "Transactions"

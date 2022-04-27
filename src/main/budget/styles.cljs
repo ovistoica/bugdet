@@ -1,34 +1,22 @@
 (ns budget.styles)
 
 (def colors
-  {
-   :transparent     "transparent",
-   :black           "#000000",
-   :white           "#ffffff",
-   :red             "#f44336",
-
-   :red-300         "#fca5a5"
-
-   :yellow-300      "#fcd34d"
-
-   :green-300       "#86efac"
-
-
-
-   :grey-700        "#616161"
-   :grey-800        "#424242"
-   :grey-900        "#212121"
-
-   :indigo-400      "#818cf8"
-
-
-
-
-   :blue-500        "#2196f3"
-   :blue-600        "#1e88e5"
-   :blue-700        "#1976d2"
-   :blue-800        "#1565c0"
-   :blue-900        "#0d47a1"
+  {:transparent "transparent"
+   :black "#000000"
+   :white "#ffffff"
+   :red "#f44336"
+   :red-300 "#fca5a5"
+   :yellow-300 "#fcd34d"
+   :green-300 "#86efac"
+   :grey-700 "#616161"
+   :grey-800 "#424242"
+   :grey-900 "#212121"
+   :indigo-400 "#818cf8"
+   :blue-500 "#2196f3"
+   :blue-600 "#1e88e5"
+   :blue-700 "#1976d2"
+   :blue-800 "#1565c0"
+   :blue-900 "#0d47a1"
    :blue-100-accent "#82b1ff"
    :blue-200-accent "#448aff"
    :blue-400-accent "#2979ff"
