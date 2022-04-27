@@ -23,4 +23,4 @@ jobs:
           tools-deps: '1.10.1.727'
 
       - name: Format
-        run: clj -M:format src/**/*.cljs
+        run: clojure -M:format src/**/*.cljs
