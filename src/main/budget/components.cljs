@@ -66,6 +66,11 @@
     :href (nav/path-for :home)
     :icon home-icon
     :dispatch #(rf/dispatch [:nav/set-active-page :home])}
+   {:id :invoices
+    :name "Invoices"
+    :href (nav/path-for :invoices)
+    :icon chart-icon
+    :dispatch #(rf/dispatch [:nav/set-active-page :invoices])}
    {:id :reports
     :name "Reports"
     :href (nav/path-for :reports)

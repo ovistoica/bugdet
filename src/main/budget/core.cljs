@@ -16,6 +16,11 @@
   [:<> [transaction-form] [transactions-table]])
 
 
+(defn invoices-page
+  []
+  [:div.container
+   [:p "Hello invoices"]])
+
 (defn reports-page
   []
   (let [spending-limit @(rf/subscribe [:reports/spending-limit])]
@@ -36,6 +41,7 @@
   (case page-name
     :home [home-page]
     :reports [reports-page]
+    :invoices [invoices-page]
     [home-page]))
 
 

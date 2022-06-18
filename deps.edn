@@ -7,7 +7,8 @@
         com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}
         re-frame/re-frame {:mvn/version "0.10.6"}
         bidi/bidi {:mvn/version "2.1.5"}
-        kibu/pushy {:mvn/version "0.3.8"}}
+        kibu/pushy {:mvn/version "0.3.8"}
+        funcool/promesa {:mvn/version "8.0.450"}}
 
  :aliases
  {:cljs

@@ -1,0 +1,24 @@
+{:lint-as {mount.core/defstate clojure.core/def
+           eu._3e.sq-action/defaction clj-kondo.lint-as/def-catch-all
+           sqa.render/loop-for clj-kondo.lint-as/def-catch-all
+           sqa.paco/with-json-frame clojure.core/let
+           sqa.user/success-> clojure.core/->
+           sqa.test-util/with-new clojure.core/let
+           sqa.parser/mfor clojure.core/for
+
+           helix.core/defnc clojure.core/defn
+           helix.core/defhook clojure.core/defn
+           helix.core/fnc clojure.core/fn
+
+           manifold.deferred/let-flow clojure.core/let
+
+           promesa.core/-> clojure.core/->
+           promesa.core/->> clojure.core/->>
+           promesa.core/as-> clojure.core/as->
+           promesa.core/let clojure.core/let
+           promesa.core/plet clojure.core/let
+           promesa.core/loop clojure.core/loop
+           promesa.core/recur clojure.core/recur
+           promesa.core/with-redefs clojure.core/with-redefs}
+ :linters {:unresolved-symbol {:exclude [(clojure.core.match/match)]}}
+ :skip-comments true}

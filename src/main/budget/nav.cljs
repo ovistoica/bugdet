@@ -3,12 +3,11 @@
             [pushy.core :as pushy]
             [re-frame.core :as rf]))
 
-(def routes ["/" {"" :home "reports" :reports}])
+(def routes ["/" {"" :home "reports" :reports "invoices" :invoices}])
 
 (def history
   (let [dispatch #(rf/dispatch [:nav/route-changed %])
-        match #(bidi/match-route routes %)]
-    (pushy/pushy dispatch match)))
+        match #(bidi/match-route routes %)] (pushy/pushy dispatch match)))
 
 
 (defn start-router!
@@ -54,6 +53,7 @@
     (case active-page
       :home "Transactions"
       :reports "Spendings"
+      :invoices "Invoices"
       "Transactions")))
 
 

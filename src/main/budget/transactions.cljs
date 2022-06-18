@@ -81,19 +81,20 @@
     (->> transactions
          ; Create a map with "yyyyMM" (year month) as key
          ; which will keep the total transaction amount for that month
-         (reduce (fn
-                   [month-map {:keys [time amount]}]
-                   (let [dtobj (from-date (js/Date. time))
-                         map-key (year-month-format dtobj)
-                         month-map-val (or (get month-map map-key)
-                                           {:name (str (month-name dtobj)
-                                                       "-"
-                                                       (year dtobj))})]
-                     (assoc month-map
-                       map-key (update month-map-val
-                                       :total
-                                       +
-                                       amount))))
+         (reduce
+           (fn
+             [month-map {:keys [time amount]}]
+             (let [dtobj (from-date (js/Date. time))
+                   map-key (year-month-format dtobj)
+                   month-map-val (or (get month-map map-key)
+                                     {:name (str (month-name dtobj)
+                                                 "-"
+                                                 (year dtobj))})]
+               (assoc month-map
+                 map-key (update month-map-val
+                                 :total
+                                 +
+                                 amount))))
            {})
          ; Sort based on the yyyyMM key
          (seq)

@@ -1,0 +1,26 @@
+name: Validate
+
+on: [ push, pull_request ]
+
+jobs:
+  format:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: "Prepare Java"
+        uses: "actions/setup-java@v2.4.0"
+        with:
+          distribution: "adopt"
+          java-version: "8"
+
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          tools-deps: '1.10.1.727'
+
+      - name: Format
+        run: clojure -M:format src/**/*.cljs
